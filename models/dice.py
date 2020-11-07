@@ -6,19 +6,21 @@ import numpy as np
 
 @dataclass
 class Proba:
-    proba: DefaultDict[int, int]
+    def __init__(self, proba: Dict[int, int]):
+        self.proba: DefaultDict[int, int] = defaultdict(
+            int, proba
+        )  # number of faces -> face
 
     @staticmethod
     def from_list(l: List[int]):
         c = Counter(l)
         return Proba(defaultdict(int, c))
 
-
     def __add__(self, proba: "Proba") -> "Proba":
         new_proba = defaultdict(int)
         for k, v in self.proba.items():
             for k2, v2 in proba.proba.items():
-                new_proba[k+k2] += v * v2
+                new_proba[k + k2] += v * v2
         return Proba(new_proba)
 
     def normalize(self):
@@ -38,9 +40,7 @@ class Proba:
     def total_possibilities(self) -> int:
         return sum(self.proba.values())
 
-    def __mul__(self, value):
-        if value < 1:
-            raise Error("NOPE")
+    def __mul__(self, value: int) -> "Proba":
         proba = self
         for _ in range(value - 1):
             proba += self
@@ -51,9 +51,5 @@ class Proba:
         for k, v in self.proba.items():
             l[k] = v
         l = l[::-1].cumsum()[::-1]
-        l /= l.max()
-        return l
-
-    def print_inverse_cum_sum(self):
-        print(*zip(range(len(self.proba.keys())), self.inverse_cum_sum()), sep='\n')
-
+        l /= l[0]  # l[0] is max of the list by definition
+        return l[l > 0.01]
